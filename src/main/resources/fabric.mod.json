@@ -1,0 +1,32 @@
+{
+  "schemaVersion": 1,
+  "id": "bridge",
+  "version": "${version}",
+  "name": "BridgeFabric",
+  "description": "",
+  "authors": [],
+  "contact": {},
+  "license": "All-Rights-Reserved",
+  "icon": "assets/bridge/icon.png",
+  "environment": "server",
+  "entrypoints": {
+    "fabric-datagen": [
+      "github.jcbsm.bridge.client.BridgeDataGenerator"
+    ],
+    "main": [
+      "github.jcbsm.bridge.Bridge"
+    ]
+  },
+  "mixins": [
+    "bridge.mixins.json",
+    {
+      "config": "bridge.client.mixins.json",
+      "environment": "client"
+    }
+  ],
+  "depends": {
+    "fabricloader": ">=${loader_version}",
+    "fabric-api": "*",
+    "minecraft": "${minecraft_version}"
+  }
+}
