@@ -9,15 +9,9 @@ public class WhitelistConfig extends ConfigFile {
     }
 
     public static String config_version = "1.0.0";
+    public static boolean enabled = false;
 
     public static class Accounts {
-        public static int max = 1;
-        public static String max_accounts_message = "You've hit the limit!";
+        public static int max_accounts_per_user = 1;
     }
-
-    public static class Discord {
-        public static boolean email_required = false;
-    }
-
-
 }

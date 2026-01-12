@@ -9,12 +9,14 @@ import java.lang.reflect.Modifier;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import github.jcbsm.bridge.Bridge;
+import github.jcbsm.bridge.config.files.ChatRelayConfig;
 import github.jcbsm.bridge.config.files.WhitelistConfig;
 import net.fabricmc.loader.api.FabricLoader;
 import org.slf4j.Logger;
@@ -34,10 +36,11 @@ public class BridgeConfig {
 
     // Create configs
     private static final ConfigFile[] configFiles = {
-            new WhitelistConfig()
+            new WhitelistConfig(),
+            new ChatRelayConfig()
     };
 
-    private static final Map<String, ConfigFile> config = new LinkedHashMap();
+    private static final Map<String, ConfigFile> config = new HashMap<>();
 
     private BridgeConfig() {}
 

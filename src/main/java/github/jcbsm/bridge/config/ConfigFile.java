@@ -6,8 +6,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.BufferedReader;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -16,7 +14,8 @@ import java.util.Map;
 
 public abstract class ConfigFile {
 
-    private static final Logger logger = LoggerFactory.getLogger(BridgeConfig.class.getName());
+
+    private final Logger logger = LoggerFactory.getLogger(BridgeConfig.class.getName());
 
     public final String name;
     public final Path path;
@@ -25,7 +24,7 @@ public abstract class ConfigFile {
 
     protected ConfigFile(String name) {
         this.name = name.toLowerCase();
-        path = BridgeConfig.getConfigDir().resolve(this.name + ".json");
+        path = BridgeConfig.getConfigDir().resolve("cfg_" + this.name + ".json");
     }
 
     public final boolean load() throws IOException {
@@ -65,7 +64,7 @@ public abstract class ConfigFile {
     }
 
     @SuppressWarnings("unchecked")
-    private Map<String, Object> unflatten() {
+    private Map<String, Object> deflatten() {
 
         Map<String, Object> root = new HashMap<>();
 
@@ -128,7 +127,7 @@ public abstract class ConfigFile {
                         .setPrettyPrinting()
                         .create();
 
-                gson.toJson(unflatten(), writer);
+                gson.toJson(deflatten(), writer);
             }
 
         } catch (IOException e) {
