@@ -1,7 +1,7 @@
 plugins {
     id 'fabric-loom' version '1.14-SNAPSHOT'
     id 'maven-publish'
-    id 'com.github.johnrengelman.shadow' version '8.1.1'
+    id 'com.gradleup.shadow' version '9.3.1'
 }
 
 version = project.mod_version
@@ -29,35 +29,31 @@ fabricApi {
 }
 
 repositories {
-    // Add repositories to retrieve artifacts from in here.
-    // You should only use this when depending on other mods because
-    // Loom adds the essential maven repositories to download Minecraft and libraries from automatically.
-    // See https://docs.gradle.org/current/userguide/declaring_repositories.html
-    // for more information about repositories.
-
     maven {
         name 'm2-dv8tion'
         url 'https://m2.dv8tion.net/releases'
     }
 }
 
+configurations {
+    shade
+    implementation.extendsFrom(shade)
+}
+
 dependencies {
-    // To change the versions see the gradle.properties file
     minecraft "com.mojang:minecraft:${project.minecraft_version}"
     mappings "net.fabricmc:yarn:${project.yarn_mappings}:v2"
     modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
     modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
 
-    // JDA & HTTP
-    implementation("net.dv8tion:JDA:${project.jda_version}")
-    implementation 'com.squareup.okhttp3:okhttp:4.10.0'
-    implementation "club.minnced:discord-webhooks:0.8.4"
-
-    // SQLITE
-    implementation 'org.xerial:sqlite-jdbc:3.51.1.0'
-
-    // UTILS
-    implementation "blue.endless:jankson:1.2.1"
+    // Use shade for dependencies you want to bundle
+    shade("net.dv8tion:JDA:${project.jda_version}") {
+        exclude group: 'club.minnced', module: 'opus-java'
+    }
+    shade 'com.squareup.okhttp3:okhttp:4.10.0'
+    shade "club.minnced:discord-webhooks:0.8.4"
+    shade 'org.xerial:sqlite-jdbc:3.51.1.0'
+    shade "blue.endless:jankson:1.2.1"
 }
 
 processResources {
@@ -75,10 +71,6 @@ processResources {
 
 def targetJavaVersion = 21
 tasks.withType(JavaCompile).configureEach {
-    // ensure that the encoding is set to UTF-8, no matter what the system default is
-    // this fixes some edge cases with special characters not displaying correctly
-    // see http://yodaconditions.net/blog/fix-for-java-file-encoding-problems-with-gradle.html
-    // If Javadoc is generated, this must be specified in that task too.
     it.options.encoding = "UTF-8"
     if (targetJavaVersion >= 10 || JavaVersion.current().isJava10Compatible()) {
         it.options.release.set(targetJavaVersion)
@@ -90,10 +82,39 @@ java {
     if (JavaVersion.current() < javaVersion) {
         toolchain.languageVersion = JavaLanguageVersion.of(targetJavaVersion)
     }
-    // Loom will automatically attach sourcesJar to a RemapSourcesJar task and to the "build" task
-    // if it is present.
-    // If you remove this line, sources will not be generated.
     withSourcesJar()
+}
+
+shadowJar {
+    configurations = [project.configurations.shade]
+    archiveClassifier = 'dev-all'
+
+    // Exclude signature files
+    exclude 'META-INF/*.SF'
+    exclude 'META-INF/*.DSA'
+    exclude 'META-INF/*.RSA'
+
+    // Relocate packages (replace 'github.jcbsm.bridge' with your actual mod package)
+    relocate 'net.dv8tion.jda', 'github.jcbsm.bridge.shadow.jda'
+    relocate 'okhttp3', 'github.jcbsm.bridge.shadow.okhttp3'
+    relocate 'okio', 'github.jcbsm.bridge.shadow.okio'
+    relocate 'club.minnced', 'github.jcbsm.bridge.shadow.minnced'
+    // DO NOT RELOCATE SQLITE - it has native libraries that break when relocated
+    // relocate 'org.sqlite', 'github.jcbsm.bridge.shadow.sqlite'
+    relocate 'blue.endless.jankson', 'github.jcbsm.bridge.shadow.jankson'
+    relocate 'kotlin', 'github.jcbsm.bridge.shadow.kotlin'
+    relocate 'com.fasterxml', 'github.jcbsm.bridge.shadow.fasterxml'
+    relocate 'com.neovisionaries', 'github.jcbsm.bridge.shadow.neovisionaries'
+    relocate 'gnu.trove', 'github.jcbsm.bridge.shadow.trove'
+    relocate 'org.apache.commons', 'github.jcbsm.bridge.shadow.apache.commons'
+
+    mergeServiceFiles()
+}
+
+remapJar {
+    dependsOn shadowJar
+    inputFile.set shadowJar.archiveFile.get()
+    archiveClassifier = null
 }
 
 jar {
@@ -102,7 +123,6 @@ jar {
     }
 }
 
-// configure the maven publication
 publishing {
     publications {
         create("mavenJava", MavenPublication) {
@@ -111,11 +131,7 @@ publishing {
         }
     }
 
-    // See https://docs.gradle.org/current/userguide/publishing_maven.html for information on how to set up publishing.
     repositories {
         // Add repositories to publish to here.
-        // Notice: This block does NOT have the same function as the block in the top level.
-        // The repositories here will be used for publishing your artifact, not for
-        // retrieving dependencies.
     }
 }
